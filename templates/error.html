@@ -1,0 +1,183 @@
+{% extends "layout.html" %}
+
+{% block title %}Error - Pelvic X-ray Gender Classification{% endblock %}
+
+{% block content %}
+<style>
+    /* ===== ERROR SECTION STYLES ===== */
+    .error-section {
+        text-align: center;
+    }
+
+    .error-section h2 {
+        color: #c62828;
+        margin-bottom: 25px;
+        font-size: 2.2em;
+    }
+
+    .error-card {
+        background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+        padding: 35px;
+        border-radius: 12px;
+        margin: 25px 0;
+        border-left: 4px solid #f44336;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    }
+
+    .error-icon {
+        font-size: 4em;
+        margin-bottom: 20px;
+        display: block;
+    }
+
+    .error-card h3 {
+        color: #c62828;
+        margin-bottom: 15px;
+        font-size: 1.5em;
+    }
+
+    .error-card p {
+        font-size: 1.1em;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .error-details {
+        background: rgba(255, 255, 255, 0.8);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+        border-left: 3px solid #f44336;
+    }
+
+    .error-details strong {
+        color: #c62828;
+    }
+
+    /* ===== ACTIONS ===== */
+    .actions {
+        margin: 30px 0;
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* ===== TROUBLESHOOTING ===== */
+    .troubleshooting {
+        background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+        padding: 25px;
+        border-radius: 10px;
+        margin-top: 30px;
+        text-align: left;
+        border-left: 4px solid #ff9800;
+    }
+
+    .troubleshooting h3 {
+        color: #ef6c00;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+    }
+
+    .troubleshooting ul {
+        margin-left: 25px;
+    }
+
+    .troubleshooting li {
+        margin-bottom: 10px;
+        padding-left: 5px;
+        line-height: 1.5;
+    }
+
+    .troubleshooting li::marker {
+        color: #ff9800;
+        font-weight: bold;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .error-card {
+        animation: fadeIn 0.6s ease-out;
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 768px) {
+        .error-card {
+            padding: 25px;
+        }
+
+        .error-section h2 {
+            font-size: 1.8em;
+        }
+
+        .error-icon {
+            font-size: 3em;
+        }
+
+        .actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .troubleshooting {
+            padding: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .error-card {
+            padding: 20px;
+        }
+
+        .error-card h3 {
+            font-size: 1.3em;
+        }
+
+        .troubleshooting {
+            padding: 15px;
+        }
+    }
+</style>
+
+<div class="error-section">
+    <h2>Error</h2>
+
+    <div class="error-card">
+        <div class="error-icon">⚠️</div>
+        <h3>{{ error_title }}</h3>
+        <p>{{ error_message }}</p>
+
+        {% if error_details %}
+        <div class="error-details">
+            <p><strong>Details:</strong> {{ error_details }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">Upload Another Image</a>
+    </div>
+
+    <div class="troubleshooting">
+        <h3>Troubleshooting Tips:</h3>
+        <ul>
+            <li>Ensure you're uploading a valid pelvic X-ray image</li>
+            <li>Check that the image meets the size and format requirements</li>
+            <li>Make sure the file size is under 16MB</li>
+            <li>Try using a different X-ray image if the issue persists</li>
+            <li>Verify that the model is properly loaded (check status above)</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

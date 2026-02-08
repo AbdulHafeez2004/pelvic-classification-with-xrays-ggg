@@ -1,0 +1,375 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+    .upload-section {
+        text-align: center;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .upload-section h2 {
+        color: var(--neutral-800);
+        margin-bottom: var(--space-8);
+        font-size: clamp(1.5rem, 3vw, 2rem);
+        font-weight: 700;
+        letter-spacing: -0.025em;
+    }
+
+    .upload-form {
+        background: var(--neutral-50);
+        padding: var(--space-12);
+        border-radius: var(--radius-xl);
+        margin: var(--space-8) 0;
+        border: 2px dashed var(--primary-300);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-form::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, var(--primary-50) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
+    }
+
+    .upload-form:hover {
+        border-color: var(--primary-500);
+        background: white;
+        box-shadow: var(--shadow-lg);
+        transform: translateY(-2px);
+    }
+
+    .upload-form:hover::before {
+        opacity: 1;
+    }
+
+    .form-group {
+        margin-bottom: var(--space-8);
+        text-align: left;
+        position: relative;
+        z-index: 1;
+    }
+
+    .file-label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: var(--space-4);
+        font-size: 1.125rem;
+        color: var(--neutral-700);
+        letter-spacing: 0.025em;
+    }
+
+    .file-input-wrapper {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    input[type="file"] {
+        width: 100%;
+        padding: var(--space-4);
+        border: 2px solid var(--neutral-300);
+        border-radius: var(--radius-lg);
+        background: white;
+        font-size: 1rem;
+        font-family: inherit;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    input[type="file"]:hover {
+        border-color: var(--primary-400);
+        box-shadow: var(--shadow-sm);
+    }
+
+    input[type="file"]:focus {
+        outline: none;
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .file-types {
+        font-size: 0.875rem;
+        color: var(--neutral-500);
+        margin-top: var(--space-2);
+        font-style: italic;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .file-types::before {
+        content: 'ℹ️';
+        font-style: normal;
+    }
+
+    .submit-btn {
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+        color: white;
+        border: none;
+        padding: var(--space-4) var(--space-8);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-size: 1.125rem;
+        font-weight: 600;
+        font-family: inherit;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        margin: var(--space-4) 0;
+        min-width: 200px;
+        box-shadow: var(--shadow-md);
+        letter-spacing: 0.025em;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .submit-btn:hover::before {
+        left: 100%;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+        background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+    }
+
+    .submit-btn:active {
+        transform: translateY(0);
+    }
+
+    /* Alert System */
+    .alert {
+        padding: var(--space-4) var(--space-6);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-6);
+        border-left: 4px solid;
+        font-weight: 500;
+        display: flex;
+        align-items: flex-start;
+        gap: var(--space-3);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .alert::before {
+        font-size: 1.25rem;
+        flex-shrink: 0;
+        margin-top: -2px;
+    }
+
+    .alert-success {
+        background: var(--success-50);
+        color: var(--success-800);
+        border-color: var(--success-500);
+    }
+
+    .alert-success::before {
+        content: '✅';
+    }
+
+    .alert-error {
+        background: var(--error-50);
+        color: var(--error-800);
+        border-color: var(--error-500);
+    }
+
+    .alert-error::before {
+        content: '❌';
+    }
+
+    .alert-warning {
+        background: var(--warning-50);
+        color: var(--warning-800);
+        border-color: var(--warning-500);
+    }
+
+    .alert-warning::before {
+        content: '⚠️';
+    }
+
+    /* Instructions */
+    .instructions {
+        background: linear-gradient(135deg, var(--primary-50) 0%, var(--neutral-50) 100%);
+        padding: var(--space-8);
+        border-radius: var(--radius-xl);
+        margin-top: var(--space-12);
+        text-align: left;
+        border: 1px solid var(--primary-200);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .instructions h3 {
+        color: var(--primary-700);
+        margin-bottom: var(--space-4);
+        font-size: 1.25rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .instructions h3::before {
+        content: '📋';
+        font-size: 1.5rem;
+    }
+
+    .instructions ol {
+        margin-left: var(--space-6);
+        counter-reset: step-counter;
+    }
+
+    .instructions li {
+        margin-bottom: var(--space-3);
+        padding-left: var(--space-2);
+        line-height: 1.6;
+        counter-increment: step-counter;
+        position: relative;
+    }
+
+    .instructions li::marker {
+        color: var(--primary-600);
+        font-weight: 700;
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .upload-form {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .instructions {
+        animation: slideInLeft 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .upload-form {
+            padding: var(--space-8);
+        }
+
+        .upload-section h2 {
+            font-size: 1.75rem;
+        }
+
+        .submit-btn {
+            padding: var(--space-3) var(--space-6);
+            font-size: 1rem;
+            min-width: 180px;
+        }
+
+        .instructions {
+            padding: var(--space-6);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .upload-form {
+            padding: var(--space-6);
+        }
+
+        .instructions {
+            padding: var(--space-4);
+        }
+
+        .file-input-wrapper {
+            max-width: 100%;
+        }
+    }
+</style>
+
+<div class="upload-section">
+    <h2>Upload Pelvic X-ray Image</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert alert-{{ category }}">
+        {{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" class="upload-form">
+        <div class="form-group">
+            <label for="file" class="file-label">Select X-ray Image:</label>
+            <div class="file-input-wrapper">
+                <input type="file" id="file" name="file" accept=".png,.jpg,.jpeg" required>
+            </div>
+            <div class="file-types">Supported formats: PNG, JPG, JPEG</div>
+        </div>
+
+        <div class="form-group">
+            <button type="submit" class="submit-btn">
+                Analyze X-ray Image
+            </button>
+        </div>
+    </form>
+
+    <div class="instructions">
+        <h3>How to use:</h3>
+        <ol>
+            <li>Click "Choose File" to select a pelvic X-ray image</li>
+            <li>Click "Analyze X-ray Image" to process the image</li>
+            <li>View the gender prediction results on the next page</li>
+        </ol>
+
+        <div class="requirements">
+            <h3>Image Requirements:</h3>
+            <ul>
+                <li>Must be a pelvic X-ray image</li>
+                <li>Minimum dimensions: 256x256 pixels</li>
+                <li>Minimum file size: 20KB</li>
+                <li>Formats: PNG, JPG, or JPEG</li>
+                <li>Maximum file size: 16MB</li>
+            </ul>
+        </div>
+
+        <div class="note">
+            <strong>Note:</strong> The system will automatically reject non-X-ray images,
+            low-resolution images, and files that don't meet the requirements above.
+        </div>
+    </div>
+</div>
+{% endblock %}

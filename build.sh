@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# exit on error
+
+set -o errexit
+
+pip install --upgrade pip;
+pip install flask==2.3.3 numpy==1.24.3 pandas==2.0.3 scikit-learn==1.3.0 opencv-python==4.8.1.78 pillow==10.0.1 scikit-image==0.21.0 joblib==1.3.2 matplotlib==3.7.2 seaborn==0.12.2 imbalanced-learn==0.10.1 gunicorn==21.2.0;
+# python manage.py collectstatic --no-input
+python manage.py migrate
+

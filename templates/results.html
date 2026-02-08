@@ -1,0 +1,424 @@
+{% extends "layout.html" %}
+
+{% block title %}Prediction Results - Pelvic X-ray Gender Classification{% endblock %}
+
+{% block content %}
+<style>
+    .results-section {
+        text-align: center;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .results-section h2 {
+        color: var(--neutral-800);
+        margin-bottom: var(--space-8);
+        font-size: clamp(1.75rem, 4vw, 2.25rem);
+        font-weight: 700;
+        letter-spacing: -0.025em;
+    }
+
+    .result-card {
+        background: linear-gradient(135deg, var(--primary-50) 0%, var(--neutral-50) 100%);
+        padding: var(--space-8);
+        border-radius: var(--radius-xl);
+        margin: var(--space-8) 0;
+        border: 1px solid var(--primary-200);
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .result-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%233b82f6' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        pointer-events: none;
+    }
+
+    .result-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-6);
+        padding: var(--space-6);
+        background: white;
+        border-radius: var(--radius-lg);
+        flex-wrap: wrap;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--neutral-200);
+        position: relative;
+        z-index: 1;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .result-item:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-1px);
+    }
+
+    .result-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .label {
+        font-weight: 600;
+        color: var(--neutral-700);
+        font-size: 1.125rem;
+        min-width: 180px;
+        text-align: left;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .label::before {
+        font-size: 1.25rem;
+    }
+
+    .label[data-type="image"]::before {
+        content: '🖼️';
+    }
+
+    .label[data-type="gender"]::before {
+        content: '👤';
+    }
+
+    .label[data-type="confidence"]::before {
+        content: '📊';
+    }
+
+    .label[data-type="progress"]::before {
+        content: '📈';
+    }
+
+    .value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        flex: 2;
+        text-align: right;
+    }
+
+    .value.male {
+        color: var(--primary-600);
+    }
+
+    .value.female {
+        color: #ec4899;
+    }
+
+    .confidence {
+        color: var(--warning-600);
+        font-size: 1.25rem;
+    }
+
+    /* Image Preview */
+    .image-preview {
+        margin-top: var(--space-4);
+        text-align: center;
+        flex-basis: 100%;
+    }
+
+    .preview-img {
+        max-width: 100%;
+        max-height: 300px;
+        border: 3px solid var(--primary-300);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        object-fit: contain;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .preview-img:hover {
+        transform: scale(1.02);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--primary-500);
+    }
+
+    /* Confidence Bar */
+    .confidence-bar-container {
+        flex-basis: 100%;
+        margin-top: var(--space-4);
+    }
+
+    .confidence-bar {
+        width: 100%;
+        height: 32px;
+        background: var(--neutral-200);
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        margin: var(--space-3) 0;
+        position: relative;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .confidence-fill {
+        height: 100%;
+        background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+        border-radius: var(--radius-xl);
+        transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+        min-width: 8%;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .confidence-fill::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% {
+            left: -100%;
+        }
+
+        100% {
+            left: 100%;
+        }
+    }
+
+    .confidence-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: var(--neutral-700);
+        font-weight: 700;
+        font-size: 0.875rem;
+        text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.8);
+        z-index: 2;
+    }
+
+    /* Actions */
+    .actions {
+        margin: var(--space-12) 0;
+        display: flex;
+        gap: var(--space-4);
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* Model Info */
+    .model-info {
+        background: linear-gradient(135deg, var(--neutral-50) 0%, var(--neutral-100) 100%);
+        padding: var(--space-8);
+        border-radius: var(--radius-xl);
+        margin-top: var(--space-12);
+        text-align: left;
+        border: 1px solid var(--neutral-200);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .model-info h3 {
+        color: var(--neutral-700);
+        margin-bottom: var(--space-4);
+        font-size: 1.25rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    .model-info h3::before {
+        content: '🤖';
+        font-size: 1.5rem;
+    }
+
+    .model-info p {
+        margin-bottom: var(--space-3);
+        line-height: 1.6;
+        color: var(--neutral-600);
+    }
+
+    .model-info strong {
+        color: var(--neutral-800);
+        font-weight: 600;
+    }
+
+    .accuracy-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-1);
+        background: var(--success-100);
+        color: var(--success-700);
+        padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-lg);
+        font-weight: 600;
+        font-size: 0.875rem;
+        border: 1px solid var(--success-200);
+    }
+
+    .accuracy-badge::before {
+        content: '✓';
+        font-weight: 700;
+    }
+
+    /* Animations */
+    @keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    .result-card {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .result-item {
+        animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .result-item:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    .result-item:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+
+    .result-item:nth-child(3) {
+        animation-delay: 0.3s;
+    }
+
+    .result-item:nth-child(4) {
+        animation-delay: 0.4s;
+    }
+
+    .model-info {
+        animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) 0.5s both;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .result-item {
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+            gap: var(--space-3);
+        }
+
+        .label {
+            margin-bottom: var(--space-2);
+            min-width: auto;
+            text-align: left;
+            flex: none;
+        }
+
+        .value {
+            text-align: left;
+            flex: none;
+            font-size: 1.125rem;
+        }
+
+        .actions {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .confidence-bar {
+            height: 28px;
+        }
+
+        .preview-img {
+            max-height: 250px;
+        }
+
+        .results-section h2 {
+            font-size: 1.75rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .result-card {
+            padding: var(--space-6);
+        }
+
+        .model-info {
+            padding: var(--space-6);
+        }
+
+        .result-item {
+            padding: var(--space-4);
+        }
+    }
+</style>
+
+<div class="results-section">
+    <h2>Analysis Complete</h2>
+
+    <div class="result-card">
+        <div class="result-item">
+            <span class="label" data-type="image">Uploaded Image:</span>
+            <div class="image-preview">
+                <img src="{{ url_for('uploaded_file', filename=image_filename) }}" alt="Uploaded X-ray"
+                    class="preview-img">
+            </div>
+        </div>
+
+        <div class="result-item">
+            <span class="label" data-type="gender">Predicted Gender:</span>
+            <span class="value {{ 'male' if prediction.gender == 'male' else 'female' }}">
+                {{ '👨 Male' if prediction.gender == 'male' else '👩 Female' }}
+            </span>
+        </div>
+
+        <div class="result-item">
+            <span class="label" data-type="confidence">Confidence Level:</span>
+            <span class="value confidence">{{ prediction.confidence_percentage }}</span>
+        </div>
+
+        <div class="result-item">
+            <span class="label" data-type="progress">Model Confidence:</span>
+            <div class="confidence-bar-container">
+                <div class="confidence-bar">
+                    <div class="confidence-fill" style="--width: {{ prediction.confidence_width }};"></div>
+                    <div class="confidence-text">{{ prediction.confidence_percentage }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('index') }}" class="btn btn-primary">
+            🔄 Analyze Another Image
+        </a>
+        <a href="{{ url_for('confusion_matrix') }}" class="btn btn-secondary" target="_blank">
+            📊 View Model Performance
+        </a>
+    </div>
+
+    <div class="model-info">
+        <h3>About the AI Model</h3>
+        <p>This advanced machine learning model analyzes pelvic X-ray images to predict gender based on distinctive bone structure features and anatomical characteristics.</p>
+        <p><strong>Model Accuracy:</strong> <span class="accuracy-badge">{{ model_accuracy }}%</span></p>
+        <p><strong>Technology:</strong> Deep learning neural network trained on thousands of medical images</p>
+    </div>
+</div>
+{% endblock %}
